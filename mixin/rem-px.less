@@ -1,0 +1,64 @@
+//Updates the unit value
+//  Converst from rem to pixel
+//  1rem will become 10px
+//  @param currentProperty is the property from the property list
+//    (i.e. 1rem)
+.rem-px-update-unit (@currentProperty) when (isunit(@currentProperty, "rem")) {
+    //Multiplies the value by 10
+    @calculatedValue: unit(@currentProperty) * 10;
+    //Changes the unit from rem to px
+    @calculatedProperty: ~"@{calculatedValue}px";
+}
+
+//Passes the unit value through
+//  Utilizied when there is no unit assigned to a value
+//  @param currentProperty is the property from the property list
+//    (i.e. 0)
+.rem-px-update-unit (@currentProperty) when not (isunit(@currentProperty, "rem")) {
+    //The update property is set to the original property
+    //  Useful when a value with no unit has been set
+    //  (i.e. a margin of 0)
+    @calculatedProperty: @currentProperty;
+}
+
+//Recursion Base Case
+//  Prints out the converted rem to px value
+//  start -> margin: 0 1rem;
+//  finish -> margin: 0 10px;
+.rem-px-gen (@count, @pxIPList, @pxFPList, @propertyName) when (@count = 0) {
+    //Defining the resolved CSS key/value
+    @{propertyName}: @pxFPList;
+}
+
+//Recursive Loop: with units
+//  Need to change rem to px here
+//  @param count: The loop counter index
+//  @param pxIPList: The incoming property list
+//  @param pxFPList: The in process final property list
+//  @param propertyName: The CSS property being set
+.rem-px-gen (@count, @pxIPList, @pxFPList, @propertyName) when (@count > 0) {
+    //Getting current property
+    @currentProperty: extract(@pxIPList, @count);
+
+    //Mixin as a function returns updated value
+    .rem-px-update-unit(@currentProperty);
+    @udatedValue: @calculatedProperty;
+    //Appending update property
+    @modifiedProperty: ~"@{udatedValue} @{pxFPList}";
+
+    //Recursion
+    .rem-px-gen(@count - 1, @pxIPList, @modifiedProperty, @propertyName);
+}
+
+//Main mixin
+.rem-px(@propertyName, @propertyValue) {
+
+    //Loop counter
+    @count: length(@propertyValue);
+    //Change rem to px
+    .rem-px-gen(@count, @propertyValue, "", @propertyName);
+
+    //Original key/value CSS pair
+    @{propertyName}: @propertyValue;
+
+}
